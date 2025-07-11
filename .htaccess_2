@@ -1,0 +1,31 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Tangani Authorization Header (penting untuk API)
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Blokir file sensitif langsung
+    <FilesMatch "\.(env|gitignore|lock|json|log|md|yml)$">
+        Order allow,deny
+        Deny from all
+    </FilesMatch>
+
+    # Blokir direktori penting
+    RedirectMatch 403 ^/(vendor|storage|bootstrap|tests|config)/
+
+    # File/folder asli tetap dijalankan oleh Apache
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # File statis: arahkan ke dalam public/
+    RewriteCond %{REQUEST_URI} \.(css|js|png|jpe?g|gif|svg|ico|woff2?|ttf|eot|otf|map)$ [NC]
+    RewriteRule ^(.*)$ public/$1 [L]
+
+    # Laravel routing fallback
+    RewriteRule ^ public/index.php [L]
+</IfModule>
+
+# Ini penting! Paksa index file jika Rewrite gagal:
+DirectoryIndex public/index.php
